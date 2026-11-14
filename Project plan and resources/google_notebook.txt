@@ -1,0 +1,200 @@
+PRO
+
+## Sources
+
+ Meet the new notes!  Notes now live with your sources. You can chat, cite, and generate from them 
+
+ Select all 
+
+attach\_fileDrop files here
+
+markdown
+
+AI\_LMS\_48\_Hour\_Team\_Instructions.md
+
+description
+
+how will we make this project as a standalone sof…
+
+markdown
+
+Roadmap.md
+
+landscape\_2 📚 
+
+No emoji found 
+
+Loading 
+
+##  AI-Powered Learning Management System Hackathon Guide 
+
+ 2 sources·Nov 14, 2026
+
+This documentation outlines a **48-hour hackathon execution guide** for a team of three students tasked with building an **AI-powered learning management system** web application. The project requires developing a standalone platform where users can **authenticate, upload and read PDF documents, and utilize retrieval-augmented generation (RAG) chat**. Additionally, the system must support **AI-generated multiple-choice quizzes and flashcards** with secure data persistence managed through **Next.js, Supabase, and Dify**. The guide provides a strict **modular division of labor, shared technical decisions, and an hour-by-hour schedule** to ensure the team successfully delivers a fully integrated minimum viable product.
+
+i am the 3rd member brief about my work and what are technology which i will be use and how will it be integrated with other 3 people
+
+### Your Role: Learning Features, PDF Reader &amp; Assessment Logic
+
+As the **3rd member (Student 3)**, your primary ownership covers the core student learning features, the in-app document reader, and the assessment data logic[1]. You ensure students can read their uploaded documents directly inside the app, generate structured quizzes and flashcards grounded in those documents, and track their test scores reliably[1].
+
+---
+
+### Key Work &amp; Responsibilities
+
+1. **In-App PDF Document Reader**
+  * Embed a functional reader using **PDF.js** or **React PDF** inside the application[1][4].
+  * Implement page navigation (next/previous page, page indicator showing current/total) and zoom controls (zoom in/out)[1].
+  * Include loading states and error handling for missing or invalid PDFs, ensuring users can only open authorized documents[1].
+  * *Note:* You do not build the upload form (Student 1 owns upload UI, and Student 2 handles document ingestion)[5].
+2. **AI Quiz Generation &amp; Scoring System**
+  * **Quiz Workflow in Dify:** Create a dedicated **Dify Workflow** (inputs: `documentId`, `topic`, `numberOfQuestions`) that retrieves context from the indexed document and prompts the LLM to output strict JSON[2][5].
+  * **Strict Schema &amp; Validation:** Enforce an agreed JSON contract (question text, four options, correct answer index, and a grounded explanation) and validate the output on the backend before returning it to the frontend[5][6].
+  * **Authoritative Server-Side Scoring:** Implement `/api/quiz/submit` to grade student answers against the server's answer key, compute the score, and save the attempt history to the database[2].
+3. **AI Flashcard Generation &amp; Tracking**
+  * **Flashcard Workflow in Dify:** Build a separate Dify Workflow that extracts concise front/back study pairs based on the selected document and topic[2][3].
+  * **Persistence &amp; Review:** Save generated cards into the database, validate incoming JSON, and provide endpoints for reviewing cards (e.g., flipping to reveal answers and optional review statuses like `Known`/`Need Revision`)[3].
+4. **Database Schema &amp; Security (Supabase)**
+  * Set up and manage the learning tables in PostgreSQL[3][9]:
+    * `quizzes` and `quiz_questions` (quiz details, options, answers, explanations)[9].
+    * `quiz_attempts` (user scores, total questions, submission timestamp)[9].
+    * `flashcards` and `flashcard_progress` (front/back content, topic, review status)[8][9].
+  * Configure **Row Level Security (RLS)** policies so students cannot read or tamper with another student’s quizzes, attempts, or flashcards[8][10].
+
+---
+
+### Technologies You Will Use
+
+* **PDF.js / React-PDF:** For rendering and controlling PDF viewing inside the Next.js frontend[1][4].
+* **Dify Workflows:** Separate single-shot workflows (not Chatflows) designed for structured JSON generation[2].
+* **Supabase (PostgreSQL):** For relational data storage and migration tables for quizzes, attempts, and flashcards[4].
+* **Supabase Row Level Security (RLS):** To enforce student-level data privacy directly in the database[8][10].
+* **Next.js Server Route Handlers (TypeScript):** For backend endpoints (`/api/quiz/*`, `/api/flashcards/*`) that orchestrate Dify calls and validate output schemas[7].
+
+---
+
+### How You Will Integrate with Your Teammates
+
+*(Note: The 48-Hour Execution Guide is scoped around* **3 core student roles** *, while the roadmap notes a* **4-person parallel split** *where infrastructure and Next.js setup are handled across Persons A–D*[15][16]*. Here is how your work links across the team)*:
+
+#### 1\. Integration with Student 1 (Frontend, UI/UX &amp; Layout)
+
+* **API Contracts:** Student 1 builds the interactive UI screens (quiz MCQ forms, flashcard flip cards, score displays)[17][18]. You supply the backend API routes (`/api/quiz/generate`, `/api/quiz/submit`, `/api/flashcards/generate`, etc.) and agreed JSON response schemas[7].
+* **PDF Viewer Component:** You provide the embedded PDF reader component so Student 1 can integrate it directly into the student dashboard view[1].
+* **Document Binding:** Student 1 passes the selected `documentId` from their document library UI to your quiz and flashcard endpoints[5].
+
+#### 2\. Integration with Student 2 (AI Infrastructure, RAG &amp; Chat)
+
+* **Dify Access &amp; API Keys:** Student 2 sets up the Dify instance (Cloud or Docker VM) and provides you with access to build the two generation workflows and generate `DIFY_QUIZ_API_KEY` and `DIFY_FLASHCARD_API_KEY`[10].
+* **Knowledge Base Identifiers:** When Student 1 and Student 2 upload and index a PDF, Student 2 saves the indexed `dify_document_id` in the `documents` table[9]. You consume this ID to restrict your quiz/flashcard workflow retrieval to the exact document the student is studying[5][19].
+
+#### 3\. Shared Database Coordination (Across All Members)
+
+* You coordinate with Student 1 and Student 2 on the shared `documents` table schema (`id`, `user_id`, `filename`, `storage_path`, `dify_document_id`, `status`) to avoid duplicate tables and ensure seamless referencing across features[8].
+
+---
+
+Would you like to review the exact JSON schemas and Supabase SQL table definitions for your quiz and flashcard modules so you can draft them early?
+
+how should i proceed with this work i am currently at zero progress where should i progress as i will also use antigravity for this work to speed it up
+
+Starting from zero can feel daunting, but as **Student 3**, you actually have the cleanest, most modular role on the team. **You do not need to wait for Student 1 to finish UI screens or Student 2 to finish the Dify VM setup to begin making rapid progress**[1][2]**.**
+
+Because you are using an AI coding assistant (like Antigravity / Cursor), you can scaffold your schemas, database migrations, and component logic in a fraction of the usual time.
+
+Here is your exact step-by-step roadmap to go from **zero progress to a fully working feature set**, sequenced by dependencies:
+
+---
+
+### Phase 1: Database &amp; Schema Foundation (Immediate — 45 mins)
+
+*Goal: Establish the persistence layer so you and your team have a shared source of truth*[3][4]*.*
+
+1. **Create the Supabase SQL Tables:**
+  * Open your project's Supabase SQL Editor and run the table creation scripts for your features[1][3]:
+    * `quizzes` (`id`, `user_id`, `document_id`, `title`, `created_at`)[5].
+    * `quiz_questions` (`id`, `quiz_id`, `question`, `options`, `correct_answer`, `explanation`)[5].
+    * `quiz_attempts` (`id`, `quiz_id`, `user_id`, `score`, `total_questions`, `created_at`)[5].
+    * `flashcards` (`id`, `user_id`, `document_id`, `topic`, `front`, `back`)[5].
+    * `flashcard_progress` (`id`, `user_id`, `flashcard_id`, `status`, `updated_at`)[6].
+  * **Configure Row Level Security (RLS):** Ensure that `auth.uid() = user_id` on all tables so students cannot see or tamper with each other's quiz attempts or cards[6][7].
+2. **Define TypeScript Types &amp; Validation:**
+  * In `src/types/learning.ts`, define the shared interfaces for Quizzes, Questions, Attempts, and Flashcards[8].
+  * Use **Zod** to write runtime validation schemas (`QuizSchema`, `FlashcardSchema`). This guarantees that when the LLM outputs JSON, your backend strictly validates the four options, answer index, and explanations before sending it to the client[8][11].
+
+---
+
+### Phase 2: Build the In-App PDF Reader Component (1.5 hours)
+
+*Goal: Have an isolated, reusable viewer ready for Student 1 to embed in the dashboard*[1]*.*
+
+1. **Install Dependencies:**
+  * Install `react-pdf` (or `@react-pdf-viewer/core`) and standard worker dependencies[13][14].
+2. **Build** **PdfViewer.tsx** **in** **src/components/** **:**
+  * Feed Antigravity a prompt to generate a clean viewer with:
+    * Next/Previous page buttons and a page counter (`Page X of Y`)[13].
+    * Zoom in, Zoom out, and Reset Zoom controls[13].
+    * Loading skeleton/spinner and error state for invalid/unauthorized files[13].
+3. **Test in Isolation:**
+  * Place a sample PDF in `/public/sample.pdf` and test your viewer on a temporary test route (e.g., `/test-pdf`)[15][16]. Once it renders, navigates, and zooms cleanly, commit your branch and hand the component import to Student 1[12][17].
+
+---
+
+### Phase 3: Server-Side API Handlers with Mock Mode (1.5 hours)
+
+*Goal: Implement the backend assessment logic and scoring so frontend testing can begin immediately without waiting for Dify*[9]*.*
+
+Create the following App Router endpoints under `src/app/api/`[10][18]:
+
+1. **POST /api/quiz/generate** **:**
+  * Accepts `{ documentId, topic, numberOfQuestions }`[19].
+  * *Pro-Tip:* Write a temporary mock branch returning realistic dummy JSON matching your schema[8]. This allows Student 1 to integrate the quiz UI immediately while Student 2 finishes the AI backend[12][20].
+2. **POST /api/quiz/submit** **:**
+  * Receives student answers `{ quizId, answers: number[] }`[9][11].
+  * **Authoritative Server Scoring:** Query `quiz_questions` from Supabase, compare answers against the stored `correct_answer`, calculate the total score, and insert the record into `quiz_attempts`[5][9]. Never calculate the final score in client-side code[9]!
+3. **GET /api/quiz/history** **:**
+  * Fetches past attempts and scores for the signed-in user[9][18].
+4. **POST /api/flashcards/generate** **&amp;** **GET /api/flashcards** **:**
+  * Endpoint to generate/mock cards and persist them in the `flashcards` table[9][18].
+
+---
+
+### Phase 4: Dify Workflow Creation &amp; End-to-End Hookup (1.5 hours)
+
+*Goal: Replace the mock generation logic with real AI generation grounded in your documents*[21]*.*
+
+1. **Access Dify:**
+  * Once Student 2 provides the VM URL/credentials and the indexed `dify_document_id`, open Dify Studio[7].
+2. **Create Two Single-Shot Workflows (App Type: Workflow, not Chatflow)**[8]**:**
+  * **Quiz Workflow:**
+    * `Start Node`: Inputs: `documentId`, `topic`, `numQuestions`[8][22].
+    * `Knowledge Retrieval Node`: Configured with the Knowledge Base[8].
+    * `LLM Node`: Prompted with strict schema enforcement: *"Output ONLY valid JSON matching this schema, no other text: { questions: [{ question, options: string*[27]*, correctAnswer, explanation }] }"*[28].
+    * `End Node`: Outputs raw JSON[22].
+  * **Flashcard Workflow:**
+    * Same flow, outputting `{ cards: [{ front, back }] }`[9].
+3. **Generate Keys &amp; Connect:**
+  * Under app **API Access**, generate `DIFY_QUIZ_API_KEY` and `DIFY_FLASHCARD_API_KEY`[29][30].
+  * Update your Next.js route handlers (`/api/quiz/generate` and `/api/flashcards/generate`) to call Dify's REST API `/v1/workflows/run` using `fetch()` and replace the mock responses[27].
+
+---
+
+### Quick Prompts You Can Feed to Antigravity Right Now
+
+To get moving instantly, you can paste these exact prompts into Antigravity:
+
+* **Prompt 1 (Database):**
+
+&gt; *"Write a PostgreSQL migration script for Supabase creating* *quizzes* *,* *quiz\_questions* *,* *quiz\_attempts* *,* *flashcards* *, and* *flashcard\_progress* *tables with UUID primary keys and foreign key constraints. Include Row Level Security (RLS) policies allowing authenticated users to only SELECT, INSERT, and UPDATE their own rows."*
+
+* **Prompt 2 (PDF Viewer Component):**
+
+&gt; *"Create a Next.js (App Router, Tailwind CSS, TypeScript) client component* *PdfViewer.tsx* *using* *react-pdf* *. It must accept a* *url* *prop, render pages cleanly, include next/prev buttons, current page/total page indicator, zoom in/zoom out buttons (scale state), and graceful loading/error states."*
+
+* **Prompt 3 (Quiz Scoring Route):**
+
+&gt; *"Create a Next.js App Router route handler at* *src/app/api/quiz/submit/route.ts* *. It must authenticate the user via* *@supabase/ssr* *, receive* *{ quizId, answers }* *, query the true* *correct\_answer* *values from the Supabase* *quiz\_questions* *table, calculate the score authoritatively on the server, insert an attempt into* *quiz\_attempts* *, and return the score along with explanations."*
+
+---
+
+Would you like the complete, copy-pasteable SQL migration script for the Supabase tables and RLS policies right now so you can run it in your console?

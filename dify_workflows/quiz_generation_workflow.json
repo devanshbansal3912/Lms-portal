@@ -1,0 +1,85 @@
+{
+  "name": "LMS Quiz Generation Workflow",
+  "description": "AI-Powered LMS - Single-Shot Quiz Generation Workflow from Study Material",
+  "mode": "workflow",
+  "icon": "🧠",
+  "icon_background": "#FFEAD5",
+  "workflow": {
+    "nodes": [
+      {
+        "id": "start-node",
+        "type": "custom",
+        "data": {
+          "title": "Start",
+          "type": "start",
+          "variables": [
+            {
+              "variable": "document_id",
+              "label": "document_id",
+              "type": "text-input",
+              "required": true
+            },
+            {
+              "variable": "topic",
+              "label": "topic",
+              "type": "text-input",
+              "required": true
+            },
+            {
+              "variable": "num_questions",
+              "label": "num_questions",
+              "type": "number",
+              "required": true,
+              "default": 5
+            }
+          ]
+        }
+      },
+      {
+        "id": "knowledge-retrieval-node",
+        "type": "custom",
+        "data": {
+          "title": "Knowledge Retrieval",
+          "type": "knowledge-retrieval",
+          "query_variable_selector": ["start-node", "topic"],
+          "retrieval_mode": "semantic",
+          "top_k": 5,
+          "score_threshold": 0.4
+        }
+      },
+      {
+        "id": "llm-quiz-node",
+        "type": "custom",
+        "data": {
+          "title": "LLM Quiz Generator",
+          "type": "llm",
+          "model": {
+            "provider": "anthropic",
+            "name": "claude-3-5-sonnet-20241022",
+            "mode": "chat",
+            "completion_params": {
+              "temperature": 0.2,
+              "max_tokens": 3000
+            }
+          },
+          "system_prompt": "You are an authoritative university professor. Generate strict JSON: { \"title\": string, \"questions\": [{ \"question\": string, \"options\": [string, string, string, string], \"correctAnswer\": number, \"explanation\": string }] }. No other text.",
+          "user_prompt": "Context from study document: {{#knowledge-retrieval-node.result#}}\n\nGenerate {{#start-node.num_questions#}} MCQs for topic: {{#start-node.topic#}}."
+        }
+      },
+      {
+        "id": "end-node",
+        "type": "custom",
+        "data": {
+          "title": "End Output",
+          "type": "end",
+          "outputs": [
+            {
+              "variable": "result",
+              "value_selector": ["llm-quiz-node", "text"]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

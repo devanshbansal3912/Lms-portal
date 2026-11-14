@@ -1,0 +1,131 @@
+app:
+  description: 'AI-Powered LMS - Single-Shot Quiz Generation Workflow from Study Material'
+  icon: '🧠'
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: LMS Quiz Generation Workflow
+kind: app
+version: 0.1.3
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+  graph:
+    edges:
+      - id: edge-start-to-retrieval
+        source: start-node
+        target: knowledge-retrieval-node
+      - id: edge-retrieval-to-llm
+        source: knowledge-retrieval-node
+        target: llm-quiz-node
+      - id: edge-llm-to-end
+        source: llm-quiz-node
+        target: end-node
+    nodes:
+      - id: start-node
+        data:
+          title: Start
+          type: start
+          variables:
+            - label: document_id
+              max_length: 100
+              options: []
+              required: true
+              type: text-input
+              variable: document_id
+            - label: topic
+              max_length: 100
+              options: []
+              required: true
+              type: text-input
+              variable: topic
+            - label: num_questions
+              max_length: 10
+              options: []
+              required: true
+              type: number
+              variable: num_questions
+        position:
+          x: 100
+          y: 200
+        type: custom
+
+      - id: knowledge-retrieval-node
+        data:
+          title: Knowledge Retrieval
+          type: knowledge-retrieval
+          query_variable_selector:
+            - start-node
+            - topic
+          dataset_ids: []
+          retrieval_mode: semantic
+          top_k: 5
+          score_threshold: 0.4
+        position:
+          x: 400
+          y: 200
+        type: custom
+
+      - id: llm-quiz-node
+        data:
+          title: LLM Quiz Generator
+          type: llm
+          model:
+            provider: anthropic
+            name: claude-3-5-sonnet-20241022
+            mode: chat
+            completion_params:
+              temperature: 0.2
+              max_tokens: 3000
+          prompt_template:
+            - role: system
+              text: |
+                You are an authoritative university professor and assessment creator.
+                Your task is to generate high-quality multiple choice questions (MCQs) strictly grounded in the provided document context.
+
+                RULES:
+                1. Output ONLY valid JSON matching the exact schema below. Do not output markdown fences, preamble, or commentary.
+                2. Generate exactly {{#start-node.num_questions#}} questions about the topic "{{#start-node.topic#}}".
+                3. Each question must have exactly 4 options.
+                4. "correctAnswer" must be the 0-based integer index (0, 1, 2, or 3) of the correct option.
+                5. Exactly ONE option must be correct.
+                6. "explanation" must be a concise, grounded explanation citing facts directly from the retrieved context.
+
+                SCHEMA:
+                {
+                  "title": "Assessment: {{#start-node.topic#}}",
+                  "questions": [
+                    {
+                      "question": "What is ...?",
+                      "options": ["Option A", "Option B", "Option C", "Option D"],
+                      "correctAnswer": 0,
+                      "explanation": "According to the study material..."
+                    }
+                  ]
+                }
+            - role: user
+              text: |
+                Context retrieved from study document:
+                {{#knowledge-retrieval-node.result#}}
+
+                Generate {{#start-node.num_questions#}} MCQs for topic: {{#start-node.topic#}}.
+        position:
+          x: 750
+          y: 200
+        type: custom
+
+      - id: end-node
+        data:
+          title: End Output
+          type: end
+          outputs:
+            - value_selector:
+                - llm-quiz-node
+                - text
+              variable: result
+        position:
+          x: 1100
+          y: 200
+        type: custom
