@@ -1,36 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { FlashcardUpdateStatusSchema } from '@/lib/validation/flashcard';
-import { createServerAdminClient, isSupabaseConfigured } from '@/lib/supabase/server';
+
+import { NextRequest, NextResponse } from "next/server";
+import { FlashcardUpdateStatusSchema } from "@/lib/validation/flashcard";
+import {
+  createServerAdminClient,
+  isSupabaseConfigured,
+} from "@/lib/supabase/server";
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: RouteContext
+) {
   try {
-    const cardId = params.id;
+    const { id: cardId } = await params;
     const body = await request.json();
     const { status } = FlashcardUpdateStatusSchema.parse(body);
-    const defaultUserId = '11111111-1111-1111-1111-111111111111';
+    const defaultUserId = "11111111-1111-1111-1111-111111111111";
 
     if (isSupabaseConfigured) {
       const supabase = createServerAdminClient();
 
-      // Update flashcard status
       const { error: cardError } = await supabase
-        .from('flashcards')
+        .from("flashcards")
         .update({ status })
-        .eq('id', cardId);
+        .eq("id", cardId);
 
       if (cardError) {
-        console.error('[Flashcard PATCH] Error updating card:', cardError);
+        console.error("[Flashcard PATCH] Error updating card:", cardError);
       }
 
-      // Upsert progress tracking record
       const { error: progressError } = await supabase
-        .from('flashcard_progress')
+        .from("flashcard_progress")
         .upsert(
           {
             user_id: defaultUserId,
@@ -38,11 +43,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
             status,
             last_reviewed_at: new Date().toISOString(),
           },
-          { onConflict: 'user_id,flashcard_id' }
+          { onConflict: "user_id,flashcard_id" }
         );
 
       if (progressError) {
-        console.warn('[Flashcard PATCH] Progress tracking upsert notice:', progressError);
+        console.warn(
+          "[Flashcard PATCH] Progress tracking upsert notice:",
+          progressError
+        );
       }
     }
 
@@ -52,22 +60,37 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       status,
       updatedAt: new Date().toISOString(),
     });
-  } catch (error: any) {
-    console.error('[Flashcard PATCH] Error:', error);
+  } catch (error: unknown) {
+    console.error("[Flashcard PATCH] Error:", error);
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update flashcard' },
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update flashcard",
+      },
       { status: 400 }
     );
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteContext
+) {
   try {
-    const cardId = params.id;
+    const { id: cardId } = await params;
 
     if (isSupabaseConfigured) {
       const supabase = createServerAdminClient();
-      const { error } = await supabase.from('flashcards').delete().eq('id', cardId);
+
+      const { error } = await supabase
+        .from("flashcards")
+        .delete()
+        .eq("id", cardId);
+
       if (error) {
         throw error;
       }
@@ -78,10 +101,17 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       cardId,
       deleted: true,
     });
-  } catch (error: any) {
-    console.error('[Flashcard DELETE] Error:', error);
+  } catch (error: unknown) {
+    console.error("[Flashcard DELETE] Error:", error);
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete flashcard' },
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete flashcard",
+      },
       { status: 400 }
     );
   }

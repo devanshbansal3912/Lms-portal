@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -14,7 +14,7 @@ export const isSupabaseConfigured = Boolean(
 // Server-side client using Service Role key for administrative operations (authoritative scoring)
 export function createServerAdminClient() {
   const key = supabaseServiceRoleKey || supabaseAnonKey || 'placeholder-key';
-  return createClient<Database>(
+  return createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
     key,
     {
@@ -28,7 +28,7 @@ export function createServerAdminClient() {
 
 // Server-side client for request handling
 export function createServerRouteClient() {
-  return createClient<Database>(
+  return createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
     supabaseAnonKey || 'placeholder-key',
     {
